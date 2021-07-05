@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: item
+  labels:
+    app: item
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: item
+  template:
+    metadata:
+      labels:
+        app: item
+    spec:
+      containers:
+        - name: item
+          image: user23skccacr.azurecr.io/item:v1
+          ports:
+            - containerPort: 8080
+          env:
+            - name: STATUS
+              valueFrom:
+                configMapKeyRef:
+                  name: store-cm
+                  key: status
+          readinessProbe:
+            httpGet:
+              path: '/actuator/health'
+              port: 8080
+            initialDelaySeconds: 10
+            timeoutSeconds: 2
+            periodSeconds: 5
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: '/actuator/health'
+              port: 8080
+            initialDelaySeconds: 120
+            timeoutSeconds: 2
+            periodSeconds: 5
+            failureThreshold: 5
