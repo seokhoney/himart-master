@@ -1,6 +1,6 @@
-![image](https://user-images.githubusercontent.com/84000863/121391703-a45a0e80-c989-11eb-83bb-dbf8f8202686.png)
+![image](https://user-images.githubusercontent.com/84000863/124533256-f12bea80-de4c-11eb-90f3-f58950f5ed84.png)
 
-# 렌터카
+# 하이마트(전자제품 대여 시스템)
 
 본 프로젝트는 MSA/DDD/Event Storming/EDA 를 포괄하는 분석/설계/구현/운영 전단계를 커버하도록 구성한 프로젝트입니다.
 이는 클라우드 네이티브 애플리케이션의 개발에 요구되는 체크포인트들을 통과하기 위한 내용을 포함합니다.
@@ -8,23 +8,23 @@
 # 서비스 시나리오
 
 기능적 요구사항
-1. 고객이 차량 및 날짜를 선택하여 예약한다.
-2. 예약이 되면 예약 내역이 렌터카 업체에게 전달된다.
+1. 고객이 제품 및 날짜를 선택하여 예약한다.
+2. 예약이 되면 예약 내역이 업체에게 전달된다.
 3. 예약 내역이 렌터카 업체에 전달되는 동시에, 대여 가능 수량이 변경된다.
-4. 업체에서 예약 내역을 확인하여 차량을 준비한다.
-5. 차량을 준비 후, 렌트된 상태로 변경된다.
+4. 업체에서 예약 내역을 확인하여 제품을 준비한다.
+5. 제품을 준비 후, 렌트된 상태로 변경된다.
 6. 고객이 예약을 취소할 수 있다.
-7. 고객이 차량을 반납하면 대여 가능한 수량이 증가된다.
+7. 고객이 제품을 반납하면 대여 가능한 수량이 증가된다.
 8. 고객이 예약정보를 중간중간 조회한다.
-   ex) 예약시작날짜, 예약종료날짜, 수량 등
-9. 업체는 새로운 차량을 등록할 수 있다.
+   ex) 예약시작날짜, 예약종료날짜, 수량, 제품명 등
+9. 업체는 새로운 제품을 등록할 수 있다.
 
 비기능적 요구사항
 1. 트랜잭션
     1. 예약된 주문건은 대여 가능 수량이 변경되어야 한다. Sync 호출
 2. 장애격리
-    1. 업체관리 기능이 수행되지 않더라도 예약은 365일 24시간 받을 수 있어야 한다.  Async (event-driven), Eventual Consistency
-    2. 차량 등록이 과중되면 사용자를 잠시동안 받지 않고 차량 등록을 잠시후에 하도록 유도한다.  Circuit breaker
+    1. 업체 기능이 수행되지 않더라도 예약은 365일 24시간 받을 수 있어야 한다.  Async (event-driven), Eventual Consistency
+    2. 제품 등록이 과중되면 사용자를 잠시동안 받지 않고 제품 등록을 잠시후에 하도록 유도한다.  Circuit breaker
 3. 성능
     1. 고객이 예약상태를 별도의 고객페이지에서 확인할 수 있어야 한다. CQRS
 
@@ -53,7 +53,7 @@
 
 
 ## Event Storming 결과
-* MSAEz 로 모델링한 이벤트스토밍 결과:  http://www.msaez.io/#/storming/tdKjnnj8k4dt4Pik8DOnp0yYffp2/share/7d3366945eb432ceb06191adb4fca105
+* MSAEz 로 모델링한 이벤트스토밍 결과:  http://www.msaez.io/#/storming/YDRbfy7lYeUen79PbVkrB9GD8sm2/mine/c5aa77abc9e05d36d0d00fee25b7984a
 
 
 ### 이벤트 도출
@@ -91,7 +91,7 @@
 
 ### 완성된 1차 모형
 
-![image](https://user-images.githubusercontent.com/84000863/121388618-96ef5500-c986-11eb-9bde-63d46690caeb.png)
+![image](https://user-images.githubusercontent.com/84000863/124533467-52ec5480-de4d-11eb-926d-d216f074ca54.png)
 
     - View Model 추가
 
@@ -136,10 +136,10 @@
 구현한 각 서비스를 로컬에서 실행하는 방법은 아래와 같다 (각자의 포트넘버는 8081 ~ 808n 이다)
 
 ```
-cd product
+cd item
 mvn spring-boot:run
 
-cd booking
+cd reservation
 mvn spring-boot:run 
 
 cd store
@@ -152,10 +152,10 @@ mvn spring-boot:run
 
 ## DDD 의 적용
 
-- 각 서비스내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언하였다. 아래 Product가 그 예시이다.
+- 각 서비스내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언하였다. 아래 Item이 그 예시이다.
 
 ```
-package carrent;
+package himart;
 
 import javax.persistence.*;
 import org.springframework.beans.BeanUtils;
@@ -163,15 +163,34 @@ import java.util.List;
 import java.util.Date;
 
 @Entity
-@Table(name="Product_table")
-public class Product {
+@Table(name="Item_table")
+public class Item {
 
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
     private String name;
     private Integer stock;
-    private Long productId;
+    private Long itemId;
+
+    @PostPersist
+    public void onPostPersist(){
+        Registered registered = new Registered();
+        BeanUtils.copyProperties(this, registered);
+        registered.publishAfterCommit();
+
+
+    }
+
+    @PreUpdate
+    public void onPreUpdate(){
+        StockModified stockModified = new StockModified();
+        BeanUtils.copyProperties(this, stockModified);
+        stockModified.publishAfterCommit();
+
+
+    }
+
 
     public Long getId() {
         return id;
@@ -194,46 +213,46 @@ public class Product {
     public void setStock(Integer stock) {
         this.stock = stock;
     }
-    public Long getProductId() {
-        return productId;
+    public Long getItemId() {
+        return itemId;
     }
 
-    public void setProductId(Long productId) {
-        this.productId = productId;
+    public void setItemId(Long itemId) {
+        this.itemId = itemId;
     }
-
 }
 
 ```
 - Entity Pattern 과 Repository Pattern 을 적용하여 JPA 를 통하여 다양한 데이터소스 유형 (RDB or NoSQL) 에 대한 별도의 처리가 없도록 데이터 접근 어댑터를 자동 생성하기 위하여 Spring Data REST 의 RestRepository 를 적용하였다
 ```
-package carrent;
+package himart;
 
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
-@RepositoryRestResource(collectionResourceRel="products", path="products")
-public interface ProductRepository extends PagingAndSortingRepository<Product, Long>{
-    Product findByProductId(Long productId);
+@RepositoryRestResource(collectionResourceRel="items", path="items")
+public interface ItemRepository extends PagingAndSortingRepository<Item, Long>{
+    Item findByItemId(Long itemId);
 
 }
+
 ```
 - 적용 후 REST API 의 테스트
 ```
-# booking 서비스의 예약처리
-http POST http://localhost:8084/bookings qty=1 startDate=2021-07-01 endDate=2021-07-03 productId=1
+# reservation 서비스의 예약처리
+http POST http://localhost:8084/reservations itemId=1 name=SamsungTV55in qty=1 startDate=2021-07-05 endDate=2021-07-06
 
 # 주문 상태 확인
-http GET http://localhost:8084/bookings
+http GET http://localhost:8084/reservations
 
 ```
 
 
 ## 폴리글랏 퍼시스턴스
 
-product 서비스와 booking 서비스는 h2 DB로 구현하고, 그와 달리 store 서비스의 경우 Hsql DB로 구현하여, MSA간 서로 다른 종류의 DB간에도 문제 없이 동작하여 다형성을 만족하는지 확인하였다.
+item 서비스와 reservation 서비스는 h2 DB로 구현하고, 그와 달리 store 서비스의 경우 Hsql DB로 구현하여, MSA간 서로 다른 종류의 DB간에도 문제 없이 동작하여 다형성을 만족하는지 확인하였다.
 
-- product, booking 서비스의 pom.xml 설정
+- item, reservations 서비스의 pom.xml 설정
 
 ![image](https://user-images.githubusercontent.com/84000863/122320251-ed4b2d80-cf5c-11eb-85a9-e3a43e3e56d2.png)
 
@@ -248,28 +267,23 @@ Viewer를 별도로 구현하여 아래와 같이 view가 출력된다.
 
 - myPage 구현
 
-![image](https://user-images.githubusercontent.com/84000863/122505157-bc3f2b80-d036-11eb-863c-01c0de3e68fe.png)
+![image](https://user-images.githubusercontent.com/84000863/124533886-21c05400-de4e-11eb-86d9-eb5f250553cd.png)
 
 - 예약 수행 후의 myPage
 
-![image](https://user-images.githubusercontent.com/84000863/122337825-d2d37d00-cf79-11eb-8d72-c3f426879cb8.png)
-
-- 반납 수행 후의 myPage (변경된 상태 노출값 확인 가능)
-
-![image](https://user-images.githubusercontent.com/84000863/122505312-0e804c80-d037-11eb-8e28-258dbddcb45e.png)
+![image](https://user-images.githubusercontent.com/84000863/124533974-4b797b00-de4e-11eb-948d-75d843be666c.png)
 
 
 ## 동기식 호출(Req/Resp)
 
-분석단계에서의 조건 중 하나로 예약(booking)->업체(store) 간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다. 
+분석단계에서의 조건 중 하나로 예약(reservation)->업체(store) 간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다. 
 
 - 결제서비스를 호출하기 위하여 FeignClient를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현 
 
 ```
-# (booking) ProductService.java
+# (reservation) ItemService.java
 
-
-package carrent.external;
+package himart.external;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -277,13 +291,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-
-
-@FeignClient(name="product", url="http://product:8080") 
-public interface ProductService {
+@FeignClient(name="item", url="http://item:8080")
+public interface ItemService {
 
     @RequestMapping(method= RequestMethod.GET, path="/chkAndModifyStock")
-    public boolean modifyStock(@RequestParam("productId") Long productId,
+    public boolean modifyStock(@RequestParam("itemId") Long itemId,
                             @RequestParam("qty") Integer qty);
 
 }
@@ -291,21 +303,20 @@ public interface ProductService {
 
 - 예약된 직후(@PostPersist) 재고수량이 업데이트 되도록 처리 (modifyStock 호출)
 ```
-# Booking.java
+# Reservation.java
 
     @PostPersist
-    public void onPostPersist() {
+    public void onPostPersist(){
 
-            boolean rslt = BookingApplication.applicationContext.getBean(carrent.external.ProductService.class)
-            .modifyStock(this.getProductId(), this.getQty());
+        boolean rslt = ReservationApplication.applicationContext.getBean(himart.external.ItemService.class)
+        .modifyStock(this.getItemId(), this.getQty());
 
-            if (rslt) {
-                
-                Booked booked = new Booked();
-                booked.setStatus("Booked");
-                BeanUtils.copyProperties(this, booked);
-                booked.publishAfterCommit();
-            } 
+        if (rslt) {
+            Reserved reserved = new Reserved();
+            reserved.setStatus("Reserved");
+            BeanUtils.copyProperties(this, reserved);
+            reserved.publishAfterCommit();
+        }
     }
     
 ```
@@ -313,40 +324,40 @@ public interface ProductService {
 - 재고수량은 아래와 같은 로직으로 처리
 ```
 public boolean modifyStock(HttpServletRequest request, HttpServletResponse response)
-        throws Exception {
-                boolean status = false;
-                Long productId = Long.valueOf(request.getParameter("productId"));
-                int qty = Integer.parseInt(request.getParameter("qty"));
+    throws Exception {
+            boolean status = false;
+            Long itemId = Long.valueOf(request.getParameter("itemId"));
+            int qty = Integer.parseInt(request.getParameter("qty"));
 
-                Product product = productRepository.findByProductId(productId);
+            Item item = itemRepository.findByItemId(itemId);
 
-                if(product != null){
-                        if (product.getStock() >= qty) {
-                                product.setStock(product.getStock() - qty);
-                                productRepository.save(product);
-                                status = true;
-                        }
-                }
+            if(item != null){
+                    if (item.getStock() >= qty) {
+                        item.setStock(item.getStock() - qty);
+                        itemRepository.save(item);
+                        status = true;
+                    }
+            }
 
-                return status;
-        }
+            return status;
+    }   
 ```
 
 - 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 상품 시스템이 장애가 나면 예약도 못하는 것을 확인:
 
 
 
-- 상품(product) 서비스를 잠시 내려놓음 (ctrl+c)
+- 제품(item) 서비스를 잠시 내려놓음 (ctrl+c)
 
-![image](https://user-images.githubusercontent.com/84000863/122338512-c7cd1c80-cf7a-11eb-83d8-deee04832063.png)
+![image](https://user-images.githubusercontent.com/84000863/124535257-c80d5900-de50-11eb-8dfd-998002154127.png)
 
-- 예약하기(booking)
+- 예약하기(reservation)
 ```
-http POST http://localhost:8084/bookings productId=1 qty=2 startDate=2021-07-03 endDate=2021-07-05
+http POST http://localhost:8084/reservations itemId=1 name=SamsungTV55in qty=1 startDate=2021-07-06 endDate=2021-07-07
 ```
 < Fail >
 
-![image](https://user-images.githubusercontent.com/84000863/122338536-d0255780-cf7a-11eb-860c-6ddb12b8c879.png)
+![image](https://user-images.githubusercontent.com/84000863/124535338-e70beb00-de50-11eb-949c-ecb161f2da5f.png)
 
 
 - 상품(product) 서비스 재기동
@@ -361,17 +372,17 @@ http POST http://localhost:8084/bookings productId=1 qty=2 startDate=2021-07-03 
 ```
 < Success >
 
-![image](https://user-images.githubusercontent.com/84000863/122513326-3d9dba80-d045-11eb-9bea-5f22ca08a523.png)
+![image](https://user-images.githubusercontent.com/84000863/124535526-34885800-de51-11eb-8dfb-45407c1d3769.png)
 
-- 차량 등록 및 예약하기
+- 제품 등록 및 예약하기
 
-![image](https://user-images.githubusercontent.com/84000863/122513561-8190bf80-d045-11eb-9ae9-0f2fcc2ad98f.png)
+![image](https://user-images.githubusercontent.com/84000863/124536052-31da3280-de52-11eb-80c1-4014b31ba1f6.png)
 
-![image](https://user-images.githubusercontent.com/84000863/122513576-8786a080-d045-11eb-8258-c792e4f181c0.png)
+![image](https://user-images.githubusercontent.com/84000863/124536093-4ae2e380-de52-11eb-8453-81b1986b7722.png)
 
 - 예약된 후 재고 수량 줄어듬 확인
 
-![image](https://user-images.githubusercontent.com/84000863/122513362-4a221300-d045-11eb-85a8-c1903139ce98.png)
+![image](https://user-images.githubusercontent.com/84000863/124536118-5b935980-de52-11eb-9a31-bc48c05e064d.png)
 
 
 
@@ -390,10 +401,10 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: product
+        - id: item
           uri: http://localhost:8081
           predicates:
-            - Path=/products/**, /chkAndModifyStock/** 
+            - Path=/items/**, /chkAndModifyStock/** 
         - id: customercenter
           uri: http://localhost:8082
           predicates:
@@ -402,10 +413,10 @@ spring:
           uri: http://localhost:8083
           predicates:
             - Path=/stores/** 
-        - id: booking
+        - id: reservation
           uri: http://localhost:8084
           predicates:
-            - Path=/bookings/** 
+            - Path=/reservations/** 
       globalcors:
         corsConfigurations:
           '[/**]':
@@ -425,10 +436,10 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: product
-          uri: http://product:8080
+        - id: item
+          uri: http://item:8080
           predicates:
-            - Path=/products/** , /chkAndModifyStock/** 
+            - Path=/items/**, /chkAndModifyStock/** 
         - id: customercenter
           uri: http://customercenter:8080
           predicates:
@@ -437,10 +448,10 @@ spring:
           uri: http://store:8080
           predicates:
             - Path=/stores/** 
-        - id: booking
-          uri: http://booking:8080
+        - id: reservation
+          uri: http://reservation:8080
           predicates:
-            - Path=/bookings/** 
+            - Path=/reservations/** 
       globalcors:
         corsConfigurations:
           '[/**]':
@@ -460,33 +471,23 @@ server:
 - gateway 테스트
 
 ```
-http http://localhost:8088/bookings
+http http://localhost:8088/reservations
 ```
-![image](https://user-images.githubusercontent.com/84000863/122380621-07a7fa00-cfa3-11eb-94a0-4107bae6958a.png)
+![image](https://user-images.githubusercontent.com/84000863/124536319-bfb61d80-de52-11eb-9c84-8495ebdcdfae.png)
 
 
 ## 비동기식 호출(Pub/Sub)
 
-예약(booking)이 이루어진 후에 업체(store)에서 차를 배차하는 행위는 동기식이 아니라 비 동기식으로 처리하여 업체(store)의 배차처리를 위하여 예약이 블로킹 되지 않도록 처리한다.
+예약(reservation)이 이루어진 후에 업체(store)에서 차를 배차하는 행위는 동기식이 아니라 비 동기식으로 처리하여 업체(store)의 배차처리를 위하여 예약이 블로킹 되지 않도록 처리한다.
 
 - 이를 위하여 예약완료 되었음을 도메인 이벤트를 카프카로 송출한다(Publish)
  
 ```
-    @PostPersist
-    public void onPostPersist() {
-
-
-            boolean rslt = BookingApplication.applicationContext.getBean(carrent.external.ProductService.class)
-            .modifyStock(this.getProductId(), this.getQty());
-
-            if (rslt) {
-                
-                Booked booked = new Booked();
-                booked.setStatus("Booked");
-                BeanUtils.copyProperties(this, booked);
-                booked.publishAfterCommit();
-            } 
-    }
+   @PostPersist
+    public void onPostPersist(){
+        ItemRented itemRented = new ItemRented();
+        BeanUtils.copyProperties(this, itemRented);
+        itemRented.publishAfterCommit();
 ```
 
 - 업체(store)에서는 예악완료(Booked) 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다:
@@ -497,27 +498,22 @@ package carrent;
 ...
 
 @Service
+@Service
 public class PolicyHandler{
-    @Autowired 
-    StoreRepository storeRepository;
+    @Autowired StoreRepository storeRepository;
 
     @StreamListener(KafkaProcessor.INPUT)
-    public void wheneverBooked_PrepareCar(@Payload Booked booked){
-        /*
-        if(booked.isMe()){        
-            Optional<Store> optionalStore= storeRepository.findById(booked.getId());
-            Store store = optionalStore.get();
-            storeRepository.save(store);
-          }
-          */
-          if(booked.isMe()){            
+    public void wheneverReserved_PrepareItem(@Payload Reserved reserved){
+
+        if(reserved.isMe()){            
             Store store = new Store();
-            store.setBookingId(booked.getId());
-            store.setProductId(booked.getProductId());        
-            store.setStatus("CarRentStarted");
-            store.setQty(booked.getQty());
+            store.setReservationId(reserved.getId());
+            store.setItemId(reserved.getItemId());        
+            store.setStatus("Item Rent Started");
+            store.setName(reserved.getName());
+            store.setQty(reserved.getQty());
             storeRepository.save(store);
-        }  
+        }
             
     }
     
@@ -528,29 +524,29 @@ public class PolicyHandler{
   
 - 업체(store) 서비스를 잠시 내려놓음(ctrl+c)
 
-![image](https://user-images.githubusercontent.com/84000863/122338704-04991380-cf7b-11eb-8dfe-22166ecdca77.png)
+![image](https://user-images.githubusercontent.com/84000863/124536567-2c311c80-de53-11eb-92c7-a7a910030c65.png)
 
 - 예약하기(booking)
 ```
-http POST http://localhost:8084/bookings productId=1 qty=3 startDate=2021-07-01 endDate=2021-07-03 
+http POST http://localhost:8084/reservations itemId=2 name=SamsungTV65in qty=1 startDate=2021-07-06 endDate=2021-07-07
 ```
 
 < Success >
 
-![image](https://user-images.githubusercontent.com/84000863/122338729-0bc02180-cf7b-11eb-96d9-4eb7ce3ebc56.png)
+![image](https://user-images.githubusercontent.com/84000863/124536618-3bb06580-de53-11eb-90d2-558ab9f1fe7c.png)
 
 
 ## Deploy / Pipeline
 
 - 소스 가져오기
 ```
-git clone https://github.com/kary000/car.git
+git clone https://github.com/seokhoney/himart-master.git
 ```
-![image](https://user-images.githubusercontent.com/84000863/122197088-cea05480-ced2-11eb-8a64-9c2d55b41240.png)
+![image](https://user-images.githubusercontent.com/84000863/124536733-74503f00-de53-11eb-9eff-ea33dd18d34b.png)
 
 - 빌드하기
 ```
-cd booking
+cd reservation
 mvn package
 
 cd customercenter
@@ -559,40 +555,40 @@ mvn package
 cd gateway
 mvn package
 
-cd product
+cd item
 mvn package
 
 cd store
 mvn package
 ```
 
-![image](https://user-images.githubusercontent.com/84000863/122197418-1de68500-ced3-11eb-8b10-7820e8a354b8.png)
+![image](https://user-images.githubusercontent.com/84000863/124536810-a2ce1a00-de53-11eb-854e-5e614a36b974.png)
 
 - 도커라이징(Dockerizing) : Azure Container Registry(ACR)에 Docker Image Push하기
 ```
-cd booking
-az acr build --registry user05skccacr --image user05skccacr.azurecr.io/booking:latest .
+cd reservation
+az acr build --registry user23skccacr --image user23skccacr.azurecr.io/reservation:v1 .
 
 cd customercenter
-az acr build --registry user05skccacr --image user05skccacr.azurecr.io/customercenter:latest .
+az acr build --registry user23skccacr --image user23skccacr.azurecr.io/customercenter:v1 .
 
 cd gateway
-az acr build --registry user05skccacr --image user05skccacr.azurecr.io/gateway:latest .
+az acr build --registry user23skccacr --image user23skccacr.azurecr.io/gateway:v1 .
 
-cd product
-az acr build --registry user05skccacr --image user05skccacr.azurecr.io/product:latest .
+cd item
+az acr build --registry user23skccacr --image user23skccacr.azurecr.io/item:v1 .
 
 cd store
-az acr build --registry user05skccacr --image user05skccacr.azurecr.io/store:latest . 
+az acr build --registry user23skccacr --image user23skccacr.azurecr.io/store:v1 . 
 ```
-![image](https://user-images.githubusercontent.com/84000863/122322876-22597f00-cf61-11eb-90ff-bb7b26b1c21f.png)
+![image](https://user-images.githubusercontent.com/84000863/124536931-ddd04d80-de53-11eb-8356-57b7b49a7582.png)
 
 - 컨테이너라이징(Containerizing) : Deployment 생성
 ```
-cd product
+cd item
 kubectl apply -f kubernetes/deployment.yml
 
-cd booking
+cd reservation
 kubectl apply -f kubernetes/deployment.yml
 
 cd store
@@ -602,17 +598,17 @@ cd customercenter
 kubectl apply -f kubernetes/deployment.yml
 
 cd gateway
-kubectl create deploy gateway --image=user05skccacr.azurecr.io/gateway:latest
+kubectl create deploy gateway --image=user23skccacr.azurecr.io/gateway:v1
 
 kubectl get all
 ```
 
 - 컨테이너라이징(Containerizing) : Service 생성 확인
 ```
-cd product
+cd item
 kubectl apply -f kubernetes/service.yaml
 
-cd booking
+cd reservation
 kubectl apply -f kubernetes/service.yaml
 
 cd store
@@ -627,34 +623,41 @@ kubectl expose deploy gateway --type=LoadBalancer --port=8080
 kubectl get all
 ```
 
-![image](https://user-images.githubusercontent.com/84000863/122323130-9136d800-cf61-11eb-9dd6-edb2f60952c4.png)
+![image](https://user-images.githubusercontent.com/84000863/124537006-05271a80-de54-11eb-907f-d91650a4c66e.png)
 
 
 ## 서킷 브레이킹(Circuit Breaking)
 
-* 서킷 브레이킹 : istio방식으로 Circuit breaking 구현함
+* 서킷 브레이킹 : Spring FeignClient + Hystrix 사용
+* 시나리오는 제품 등록 시 요청이 과도한 경우 CirCuit Breaker 통한 장애 격리
 
-시나리오는 차량등록시 요청이 과도할 경우 CB 를 통하여 장애격리.
+Hystrix 설정: 요청처리 쓰레드에서 처리시간이 610 밀리가 초과할 경우 CirCuit Breaker Closing 설정
 
-outlierDetection 를 설정: 1초내에 연속 한번 오류발생시, 호스트를 10초동안 100% CB 회로가 닫히도록 (요청을 빠르게 실패처리, 차단) 설정
-
-```
-# dr-htttpbin.yaml
-
-outlierDetection:
-        consecutive5xxErrors: 1
-        interval: 1s
-        baseEjectionTime: 10s
-        maxEjectionPercent: 100
+![image](https://user-images.githubusercontent.com/84000863/124538496-b29b2d80-de56-11eb-93d3-212dc07a6690.png)
 
 ```
+# (item) application.yml 
+
+feign:
+  hystrix:
+    enabled: true
+ 
+hystrix:
+  command:
+    default:
+      execution.isolation.thread.timeoutInMilliseconds: 610
+```
+
+피호출되는 Item의 부하처리 : 400 밀리초 + 랜덤으로 220 밀리초 추가되도록 thread sleep 조정
+
+![image](https://user-images.githubusercontent.com/84000863/124539517-9d270300-de58-11eb-8ae0-60c0791176ed.png)
 
 * 부하테스터 siege 툴을 통한 서킷 브레이커 동작 확인:
 - 동시사용자 100명
 - 30초 동안 실시
 
 ```
-$ siege -c100 -t30S -v --content-type "application/json" 'http://52.231.76.211:8080/products POST {"productId": "1001", "stock":"50", "name":"IONIQ"}'
+$ siege -c100 -t30S -v --content-type "application/json" 'http://item:8080/items POST {"itemId": "99", "stock":"5", "name":"laptop"}'
 ```
 
 앞서 설정한 부하가 발생하여 Circuit Breaker가 발동, 초반에는 요청 실패처리되었으며
@@ -662,20 +665,16 @@ $ siege -c100 -t30S -v --content-type "application/json" 'http://52.231.76.211:8
 
 - Availability 가 높아진 것을 확인 (siege)
 
-![image](https://user-images.githubusercontent.com/84000863/122497960-454f6600-d029-11eb-9a72-09992ab1baba.png)
-
-- 모니터링 시스템(Kiali) : EXTERNAL-IP:20001 에서 Circuit Breaker 뱃지 발생 확인함.
-
-![image](https://user-images.githubusercontent.com/84000863/122333368-01018e80-cf73-11eb-94c9-c99368bb6636.png)
+![image](https://user-images.githubusercontent.com/84000863/124540849-30f9ce80-de5b-11eb-88c5-e27866b5612e.png)
 
 
 ### Autoscale (HPA)
 앞서 CB 는 시스템을 안정되게 운영할 수 있게 해줬지만 사용자의 요청을 100% 받아들여주지 못했기 때문에 이에 대한 보완책으로 자동화된 확장 기능을 적용하고자 한다. 
 
 
-- 상품(product) 서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 1프로를 넘어서면 replica 를 10개까지 늘려준다:
+- 제품(item) 서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 1프로를 넘어서면 replica 를 10개까지 늘려준다:
 ```
-kubectl autoscale deploy product --min=1 --max=10 --cpu-percent=1
+kubectl autoscale deploy item --min=1 --max=10 --cpu-percent=1
 
 kubectl get hpa
 ```
@@ -683,7 +682,7 @@ kubectl get hpa
 
 - CB 에서 했던 방식대로 워크로드를 30초 동안 걸어준다.
 ```
-siege -c100 -t30S -v --content-type "application/json" 'http://52.231.76.211:8080/products POST {"productId": "1001", "stock":"50", "name":"IONIQ"}'
+$ siege -c100 -t30S -v --content-type "application/json" 'http://item:8080/items POST {"itemId": "99", "stock":"5", "name":"laptop"}'
 ```
 
 - 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
@@ -693,13 +692,11 @@ watch -n 1 kubectl get pod
 
 - 어느정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다:
 
-![image](https://user-images.githubusercontent.com/84000863/122336985-a1a67d00-cf78-11eb-8be9-d1700f67ceb2.png)
+![image](https://user-images.githubusercontent.com/84000863/124541296-12e09e00-de5c-11eb-8c0f-4f7dd0b75d9c.png)
 
+![image](https://user-images.githubusercontent.com/84000863/124541339-255ad780-de5c-11eb-9ac7-f50c69cc94b1.png)
 
-- siege 의 로그를 보아도 전체적인 성공률이 높아진 것을 확인 할 수 있다. 
-  (동일 워크로드 CB 대비 2.70% -> 84.10% 성공률 향상)
-
-![image](https://user-images.githubusercontent.com/84000863/122337016-ad923f00-cf78-11eb-86b9-c3a6e08373a0.png)
+![image](https://user-images.githubusercontent.com/84000863/124541529-93070380-de5c-11eb-8231-42122c151998.png)
 
 
 ## 무정지 재배포
@@ -739,7 +736,7 @@ kubectl set image deploy product user05skccacr.azurecr.io/product:v2
 
 ## ConfigMap
 
-- Booking 서비스의 deployment.yml 파일에 아래 항목 추가
+- Reservation 서비스의 deployment.yml 파일에 아래 항목 추가
 ```
 env:
    - name: STATUS
@@ -749,17 +746,17 @@ env:
          key: status
 ```
 
-- Booking 서비스에 configMap 설정 데이터 가져오도록 아래 항목 추가
+- Reservation 서비스에 configMap 설정 데이터 가져오도록 아래 항목 추가
 
 ![image](https://user-images.githubusercontent.com/84000863/122492593-04ebea00-d021-11eb-8000-9e6b55d75ffb.png)
 
 - ConfigMap 생성 및 조회
 ```
-kubectl create configmap storecm --from-literal=status=Booked
+kubectl create configmap storecm --from-literal=status=Reserved
 kubectl get configmap storecm -o yaml
 ```
 
-![image](https://user-images.githubusercontent.com/84000863/122506477-6455f400-d039-11eb-93b2-2145d21f8e36.png)
+![image](https://user-images.githubusercontent.com/84000863/124537946-c98d5000-de55-11eb-8298-266f655cac15.png)
 
 - ConfigMap 설정 데이터 조회
 
