@@ -595,29 +595,22 @@ kubectl get all
 
 ## 서킷 브레이킹(Circuit Breaking)
 
-* 서킷 브레이킹 : Spring FeignClient + Hystrix 사용
-* 시나리오는 제품 등록 시 요청이 과도한 경우 CirCuit Breaker 통한 장애 격리
+* 서킷 브레이킹 : istio방식으로 Circuit breaking 구현함
 
-Hystrix 설정: 요청처리 쓰레드에서 처리시간이 610 밀리가 초과할 경우 CirCuit Breaker Closing 설정
+시나리오는 차량등록시 요청이 과도할 경우 CB 를 통하여 장애격리.
 
-![image](https://user-images.githubusercontent.com/84000863/124538496-b29b2d80-de56-11eb-93d3-212dc07a6690.png)
+outlierDetection 를 설정: 1초내에 연속 한번 오류발생시, 호스트를 10초동안 100% CB 회로가 닫히도록 (요청을 빠르게 실패처리, 차단) 설정
 
 ```
-# (item) application.yml 
+# dr-htttpbin.yaml
 
-feign:
-  hystrix:
-    enabled: true
- 
-hystrix:
-  command:
-    default:
-      execution.isolation.thread.timeoutInMilliseconds: 610
+outlierDetection:
+        consecutive5xxErrors: 1
+        interval: 1s
+        baseEjectionTime: 10s
+        maxEjectionPercent: 100
+
 ```
-
-피호출되는 Item의 부하처리 : 400 밀리초 + 랜덤으로 220 밀리초 추가되도록 thread sleep 조정
-
-![image](https://user-images.githubusercontent.com/84000863/124539517-9d270300-de58-11eb-8ae0-60c0791176ed.png)
 
 * 부하테스터 siege 툴을 통한 서킷 브레이커 동작 확인:
 - 동시사용자 100명
@@ -631,7 +624,6 @@ $ siege -c100 -t30S -v --content-type "application/json" 'http://item:8080/items
 밀린 부하가 product에서 처리되면서 다시 요청을 받기 시작함
 
 - Availability 가 높아진 것을 확인 (siege)
-
 
 
 ### Autoscale (HPA)
