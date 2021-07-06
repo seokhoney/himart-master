@@ -37,7 +37,7 @@
 5. Gateway
 6. Deploy/ Pipeline
 7. Circuit Breaker
-8. f (HPA)
+8. Autoscale (HPA)
 9. Zero-downtime deploy
 10. Config Map / Persistence Volume
 11. Polyglot
@@ -636,7 +636,7 @@ kubectl autoscale deploy item --min=1 --max=10 --cpu-percent=3
 
 kubectl get hpa
 ```
-![image](https://user-images.githubusercontent.com/84000863/122494497-71b4b380-d024-11eb-948d-97ef4a8628ae.png)
+![image](https://user-images.githubusercontent.com/84000863/124548980-77562a00-de69-11eb-9206-978779d5df61.png)
 
 - CB 에서 했던 방식대로 워크로드를 30초 동안 걸어준다.
 ```
