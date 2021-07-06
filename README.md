@@ -624,6 +624,7 @@ $ siege -c100 -t30S -v --content-type "application/json" 'http://item:8080/items
 밀린 부하가 product에서 처리되면서 다시 요청을 받기 시작함
 
 - Availability 가 높아진 것을 확인 (siege)
+![image](https://user-images.githubusercontent.com/84000863/124550639-ecc2fa00-de6b-11eb-85d7-577b8ccffac3.png)
 
 
 ### Autoscale (HPA)
