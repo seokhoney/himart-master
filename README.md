@@ -715,19 +715,14 @@ env:
 
 - Reservation 서비스에 configMap 설정 데이터 가져오도록 아래 항목 추가
 
-![image](https://user-images.githubusercontent.com/84000863/122492593-04ebea00-d021-11eb-8000-9e6b55d75ffb.png)
+![image](https://user-images.githubusercontent.com/84000863/124545702-7a9ae700-de64-11eb-8bc8-04a728b5e983.png)
 
 - ConfigMap 생성 및 조회
 ```
 kubectl create configmap storecm --from-literal=status=Reserved
 kubectl get configmap storecm -o yaml
 ```
-
 ![image](https://user-images.githubusercontent.com/84000863/124537946-c98d5000-de55-11eb-8298-266f655cac15.png)
-
-- ConfigMap 설정 데이터 조회
-
-![image](https://user-images.githubusercontent.com/84000863/122492475-c5bd9900-d020-11eb-9131-16619f8324ab.png)
 
 
 
