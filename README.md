@@ -626,6 +626,8 @@ $ siege -c100 -t30S -v --content-type "application/json" 'http://item:8080/items
 - Availability 가 높아진 것을 확인 (siege)
 ![image](https://user-images.githubusercontent.com/84000863/124550639-ecc2fa00-de6b-11eb-85d7-577b8ccffac3.png)
 
+- 모니터링 시스템(Kiali) : EXTERNAL-IP:20001 에서 Circuit Breaker 뱃지 발생 확인함.
+![image](https://user-images.githubusercontent.com/84000863/124552073-01a08d00-de6e-11eb-8028-cccac05cad9a.png)
 
 ### Autoscale (HPA)
 앞서 CB 는 시스템을 안정되게 운영할 수 있게 해줬지만 사용자의 요청을 100% 받아들여주지 못했기 때문에 이에 대한 보완책으로 자동화된 확장 기능을 적용하고자 한다. 
