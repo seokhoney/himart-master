@@ -724,6 +724,8 @@ kubectl get configmap storecm -o yaml
 ```
 ![image](https://user-images.githubusercontent.com/84000863/124537946-c98d5000-de55-11eb-8298-266f655cac15.png)
 
+![image](https://user-images.githubusercontent.com/84000863/124546501-af5b6e00-de65-11eb-82e4-1520459100c1.png)
+
 
 
 ## Self-Healing (Liveness Probe)
