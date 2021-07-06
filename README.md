@@ -56,39 +56,6 @@
 * MSAEz 로 모델링한 이벤트스토밍 결과:  http://www.msaez.io/#/storming/YDRbfy7lYeUen79PbVkrB9GD8sm2/mine/c5aa77abc9e05d36d0d00fee25b7984a
 
 
-### 이벤트 도출
-![image](https://user-images.githubusercontent.com/84000863/121367196-11af7480-c975-11eb-9cc9-2b3a693f1ec5.png)
-
-### 부적격 이벤트 탈락
-![image](https://user-images.githubusercontent.com/84000863/121383633-8dfc8480-c982-11eb-8e05-a111676932d6.png)
-
-    - 과정중 도출된 잘못된 도메인 이벤트들을 걸러내는 작업을 수행함
-        - 예약내역 조회됨 :  UI 의 이벤트이지, 업무적인 의미의 이벤트가 아니라서 제외
-
-### 액터, 커맨드 부착하여 읽기 좋게
-![image](https://user-images.githubusercontent.com/84000863/121384293-1713bb80-c983-11eb-8cf1-5b30cbfe41ee.png)
-
-### 어그리게잇으로 묶기
-![image](https://user-images.githubusercontent.com/84000863/121385028-bafd6700-c983-11eb-9b9d-26ccaaf47ec5.png)
-
-    - product, book의 상품과 예약, store의 업체는 그와 연결된 command 와 event 들에 의하여 트랜잭션이 유지되어야 하는 단위로 그들 끼리 묶어줌
-
-### 바운디드 컨텍스트로 묶기
-
-![image](https://user-images.githubusercontent.com/84000863/121385407-0b74c480-c984-11eb-9f4a-53137a4601af.png)
-
-    - 도메인 서열 분리 
-        - Core Domain:  product, book, store : 없어서는 안될 핵심 서비스이며, 연견 Up-time SLA 수준을 99.999% 목표, 배포주기는 app, book, store 의 경우 1주일 1회 미만
-        - Supporting Domain:  -- : 경쟁력을 내기위한 서비스이며, SLA 수준은 연간 60% 이상 uptime 목표, 배포주기는 각 팀의 자율이나 표준 스프린트 주기가 1주일 이므로 1주일 1회 이상을 기준으로 함.
-
-### 폴리시 부착 (괄호는 수행주체, 폴리시 부착을 둘째단계에서 해놔도 상관 없음. 전체 연계가 초기에 드러남)
-
-![image](https://user-images.githubusercontent.com/84000863/121385551-2cd5b080-c984-11eb-8430-77f6e06d9581.png)
-
-### 폴리시의 이동과 컨텍스트 매핑 (점선은 Pub/Sub, 실선은 Req/Resp)
-
-![image](https://user-images.githubusercontent.com/84000863/121385879-78885a00-c984-11eb-9309-c82ac0c9d9b0.png)
-
 ### 완성된 1차 모형
 
 ![image](https://user-images.githubusercontent.com/84000863/124533467-52ec5480-de4d-11eb-926d-d216f074ca54.png)
@@ -97,34 +64,34 @@
 
 ### 1차 완성본에 대한 기능적/비기능적 요구사항을 커버하는지 검증
 
-![image](https://user-images.githubusercontent.com/84000863/121388710-ab335200-c986-11eb-966a-3f30b94ba7c0.png)
+![image](https://user-images.githubusercontent.com/84000863/124543407-27269a00-de60-11eb-8d28-527c1217a163.png)
 
-    - 고객이 차량을 예약한다 (ok)
-    - 예약이 되면 렌터카 업체에게 전달된다 (ok)
-    - 예약 내역이 렌터카 업체에 전달되는 동시에, 대여 가능 수량이 변경된다. (ok)
-    - 업체에서 예약 내역을 확인하여 차량을 준비한다. (ok)
-    - 차량을 준비 후, 렌트되면 렌트된 상태로 변경된다. (ok)
+    - 고객이 제품을 예약한다 (ok)
+    - 예약이 되면 업체에게 전달된다 (ok)
+    - 예약 내역이 업체에 전달되는 동시에, 대여 가능 수량이 변경된다. (ok)
+    - 업체에서 예약 내역을 확인하여 제품을 준비한다. (ok)
+    - 제품을 준비 후, 렌트되면 렌트된 상태로 변경된다. (ok)
 
-![image](https://user-images.githubusercontent.com/84000863/121389124-0cf3bc00-c987-11eb-9c44-c437bda469c6.png)
+![image](https://user-images.githubusercontent.com/84000863/124543478-4ae9e000-de60-11eb-880c-f71055c345d9.png)
 
-    - 고객이 주문을 취소할 수 있다 (ok)
-    - 고객이 차량을 반납하면 대여 가능 수량이 변경된다. (ok)
+    - 고객이 예약을 취소할 수 있다 (ok)
+    - 고객이 제품을 반납하면 대여 가능 수량이 변경된다. (ok)
     - 고객이 예약정보를 중간중간 조회한다. (View-green sticker 의 추가로 ok) 
 
 
 ### 비기능 요구사항에 대한 검증
 
-![image](https://user-images.githubusercontent.com/84000863/121389596-8db2b800-c987-11eb-9ba7-d03b9f7b04aa.png)
+![image](https://user-images.githubusercontent.com/84000863/124543567-78368e00-de60-11eb-84d9-35847cf63e61.png)
 
     - 1) 예약된 주문건은 대여 가능 수량이 변경되어야 한다. (Req/Res)
     - 2) 업체관리 기능이 수행되지 않더라도 예약은 365일 24시간 받을 수 있어야 한다. (Pub/sub)
-    - 3) 차량등록 시스템이 과중되면 잠시동안 받지 않고 등록을 잠시후에 하도록 유도한다 (Circuit breaker)
+    - 3) 제품등록 시스템이 과중되면 잠시동안 받지 않고 등록을 잠시후에 하도록 유도한다 (Circuit breaker)
     - 4) 고객이 예약상태를 별도의 고객페이지에서 확인할 수 있어야 한다 (CQRS)
 
 
 ## 헥사고날 아키텍처 다이어그램 도출
     
-![image](https://user-images.githubusercontent.com/84000863/122320373-15d32780-cf5d-11eb-95b7-23935cda9bb4.png)
+![image](https://user-images.githubusercontent.com/84000863/124543270-ee86c080-de5f-11eb-8b11-e6aec1785a70.png)
 
     - Chris Richardson, MSA Patterns 참고하여 Inbound adaptor와 Outbound adaptor를 구분함
     - 호출관계에서 PubSub 과 Req/Resp 를 구분함
