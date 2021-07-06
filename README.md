@@ -737,10 +737,10 @@ kubectl get configmap storecm -o yaml
    failureThreshold: 5
 ```
 
-- product에 liveness 적용 확인
+- store에 liveness 적용 확인
 
 ![image](https://user-images.githubusercontent.com/84000863/124548501-c485cc00-de68-11eb-9d08-b1e0161d8c63.png)
 
-- product 서비스에 liveness가 발동되었고, 포트에 응답이 없기에 Restart가 발생함
+- store 서비스에 liveness가 발동되었고, 포트에 응답이 없기에 Restart가 발생함
 
 ![image](https://user-images.githubusercontent.com/84000863/124548632-f26b1080-de68-11eb-8594-376b2d18d240.png)
