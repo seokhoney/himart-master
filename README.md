@@ -37,7 +37,7 @@
 5. Gateway
 6. Deploy/ Pipeline
 7. Circuit Breaker
-8. Autoscale (HPA)
+8. f (HPA)
 9. Zero-downtime deploy
 10. Config Map / Persistence Volume
 11. Polyglot
@@ -632,16 +632,15 @@ $ siege -c100 -t30S -v --content-type "application/json" 'http://item:8080/items
 
 - Availability 가 높아진 것을 확인 (siege)
 
-![image](https://user-images.githubusercontent.com/84000863/124540849-30f9ce80-de5b-11eb-88c5-e27866b5612e.png)
 
 
 ### Autoscale (HPA)
 앞서 CB 는 시스템을 안정되게 운영할 수 있게 해줬지만 사용자의 요청을 100% 받아들여주지 못했기 때문에 이에 대한 보완책으로 자동화된 확장 기능을 적용하고자 한다. 
 
 
-- 제품(item) 서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 1프로를 넘어서면 replica 를 10개까지 늘려준다:
+- 제품(item) 서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 3프로를 넘어서면 replica 를 10개까지 늘려준다:
 ```
-kubectl autoscale deploy item --min=1 --max=10 --cpu-percent=1
+kubectl autoscale deploy item --min=1 --max=10 --cpu-percent=3
 
 kubectl get hpa
 ```
