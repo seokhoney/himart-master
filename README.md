@@ -672,14 +672,14 @@ watch -n 1 kubectl get pod
 
 - seige 로 배포작업 직전에 워크로드를 모니터링 함.
 ```
-siege -c10 -t360S -v --content-type "application/json" 'http://20.41.96.68:8080/products POST {"productId": "1001", "stock":"50", "name":"IONIQ"}'
+siege -c10 -t120S -v --content-type "application/json" 'http://item:8080/items POST {"itemId": "99", "stock":"5", "name":"laptop"}'
 ```
 - Readiness가 설정되지 않은 yml 파일로 배포 중 버전1에서 버전2로 업그레이드 시 서비스 요청 처리 실패
 ```
-kubectl set image deploy product user05skccacr.azurecr.io/product:v2
+kubectl set image deploy item item=user23skccacr.azurecr.io/item:v2
 ```
 
-![image](https://user-images.githubusercontent.com/84000863/122378900-53f23a80-cfa1-11eb-81ab-2c8b60a8a79b.png)
+![image](https://user-images.githubusercontent.com/84000863/124545098-5c80b700-de63-11eb-9dd9-60f49fb97619.png)
 
 - deployment.yml에 readiness 옵션을 추가
 ```
@@ -694,11 +694,11 @@ kubectl set image deploy product user05skccacr.azurecr.io/product:v2
 
 - readiness 옵션을 배포 옵션을 설정 한 경우 Availability가 배포기간 동안 변화가 없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
 
-![image](https://user-images.githubusercontent.com/84000863/122379442-d418a000-cfa1-11eb-8b67-fad7b18e64b1.png)
+![image](https://user-images.githubusercontent.com/84000863/124545528-2d1e7a00-de64-11eb-8998-a23eed32788e.png)
 
-- 기존 버전과 새 버전의 product pod 공존 중
+- 기존 버전과 새 버전의 item replicaset
 
-![image](https://user-images.githubusercontent.com/84000863/122379354-c06d3980-cfa1-11eb-97cc-2e28e1902117.png)
+![image](https://user-images.githubusercontent.com/84000863/124545486-14ae5f80-de64-11eb-948d-8dda11b6a695.png)
 
 
 ## ConfigMap
